@@ -1,18 +1,11 @@
 module Api
   module V1
     class ReviewsController < ApplicationController
-      def index
-        reviews = Review.all
-        render json: ReviewSerializer.new(reviews).serialized_json
-      end
+      protect_from_forgery with: :null_session
 
-      def show
-        review = Review.find_by(slug: params[:slug])
-        render json: ReviewSerializer.new(review).serialized_json
-      end
-
+      # POST /api/v1/reviews
       def create
-        review = Review.new(airline_param)
+        review = Review.new(review_params)
 
         if review.save
           render json: ReviewSerializer.new(review).serialized_json
@@ -22,21 +15,21 @@ module Api
       end
 
       def update
-        review = Review.find_by(params[:id])
+        review = Review.find(params[:id])
 
-        if review.update(review_param)
+        if review.update(review_params)
           render json: ReviewSerializer.new(review, options).serialized_json
         else
           render json: { error: review.errors.messages }, status: 422
         end
       end
 
+      # DELETE /api/v1/reviews/:id
       def destroy
-        review = Review.find_by(params[:id])
+        review = Review.find(params[:id])
 
         if review.destroy
           head :no_content
-          render json: ReviewSerializer.new(review).serialized_json
         else
           render json: { error: review.errors.messages }, status: 422
         end
@@ -44,9 +37,11 @@ module Api
 
       private
 
-      def review_param
-        params.require(:review).permit(:name, :description, :score, :airline_id)
+      # Strong params
+      def review_params
+        params.require(:review).permit(:title, :description, :score, :airline_id)
       end
+
 
     end
   end
